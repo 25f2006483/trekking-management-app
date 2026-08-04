@@ -6,10 +6,63 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container mt-5">
-        <h2>welcome, {{ session['name'] }}</h2>
-        <p>you are logged in as trek staff.</p>
-        <a href="/logout" class="btn btn-danger">logout</a>
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand">trekking management app</a>
+        <div>
+            <span class="text-white me-3">welcome, {{ session['name'] }}</span>
+            <a href="/logout" class="btn btn-danger btn-sm">logout</a>
+        </div>
     </div>
+</nav>
+
+<div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h3>my dashboard</h3>
+    <p>total assigned treks: {{ treks|length }}</p>
+
+    <h5 class="mt-4">assigned treks</h5>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>id</th>
+                <th>name</th>
+                <th>location</th>
+                <th>difficulty</th>
+                <th>slots</th>
+                <th>status</th>
+                <th>participants</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trek in treks %}
+            <tr>
+                <td>{{ trek.id }}</td>
+                <td>{{ trek.name }}</td>
+                <td>{{ trek.location }}</td>
+                <td>{{ trek.difficulty }}</td>
+                <td>{{ trek.available_slots }}</td>
+                <td>{{ trek.status }}</td>
+                <td>{{ trek.bookings|length }}</td>
+                <td>
+                    <a href="/staff/trek/{{ trek.id }}" class="btn btn-sm btn-primary">manage</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">no treks assigned yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

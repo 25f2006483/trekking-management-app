@@ -140,7 +140,8 @@ def admin_dashboard():
 def staff_dashboard():
     if session.get('role') != 'staff':
         return redirect(url_for('login'))
-    return render_template('staff/dashboard.html')
+    treks = Trek.query.filter_by(assigned_staff_id=session['user_id']).all()
+    return render_template('staff/dashboard.html', treks=treks)
 
 @app.route('/user/dashboard')
 def user_dashboard():
@@ -277,6 +278,37 @@ def admin_bookings():
         return redirect(url_for('login'))
     bookings = Booking.query.all()
     return render_template('admin/bookings.html', bookings=bookings)
+
+@app.route('/admin/treks/assign/<int:trek_id>', methods=['GET', 'POST'])
+def assign_staff(trek_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    trek = Trek.query.get_or_404(trek_id)
+    staff_list = Staff.query.filter_by(status='approved').all()
+    if request.method == 'POST':
+        staff_id = request.form.get('staff_id')
+        trek.assigned_staff_id = int(staff_id)
+        db.session.commit()
+        flash('staff assigned successfully.', 'success')
+        return redirect(url_for('admin_treks'))
+    return render_template('admin/assign_staff.html', trek=trek, staff_list=staff_list)
+
+@app.route('/staff/trek/<int:trek_id>', methods=['GET', 'POST'])
+def staff_manage_trek(trek_id):
+    if session.get('role') != 'staff':
+        return redirect(url_for('login'))
+    trek = Trek.query.get_or_404(trek_id)
+    if trek.assigned_staff_id != session['user_id']:
+        flash('you are not assigned to this trek.', 'danger')
+        return redirect(url_for('staff_dashboard'))
+    if request.method == 'POST':
+        trek.available_slots = int(request.form.get('available_slots'))
+        trek.status = request.form.get('status')
+        db.session.commit()
+        flash('trek updated successfully.', 'success')
+        return redirect(url_for('staff_manage_trek', trek_id=trek_id))
+    bookings = Booking.query.filter_by(trek_id=trek_id).all()
+    return render_template('staff/manage_trek.html', trek=trek, bookings=bookings)
 
 if __name__ == "__main__":
     app.run(debug=True)
