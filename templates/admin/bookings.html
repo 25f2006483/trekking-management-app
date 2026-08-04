@@ -6,6 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+
 <nav class="navbar navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand">trekking management app</a>
@@ -18,32 +19,45 @@
 
 <div class="container mt-4">
     <h3>all bookings</h3>
-    <table class="table table-bordered table-striped mt-3">
-        <thead class="table-dark">
-            <tr>
-                <th>id</th>
-                <th>user</th>
-                <th>trek</th>
-                <th>booking date</th>
-                <th>status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for booking in bookings %}
-            <tr>
-                <td>{{ booking.id }}</td>
-                <td>{{ booking.user.name }}</td>
-                <td>{{ booking.trek.name }}</td>
-                <td>{{ booking.booking_date.strftime('%d/%m/%Y') }}</td>
-                <td>{{ booking.status }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" class="text-center">no bookings yet</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th class="text-center">booking id</th>
+                    <th>user</th>
+                    <th>user email</th>
+                    <th>trek</th>
+                    <th>location</th>
+                    <th class="text-center">difficulty</th>
+                    <th class="text-center">duration</th>
+                    <th class="text-center">booking date</th>
+                    <th class="text-center">status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td class="text-center">{{ booking.id }}</td>
+                    <td>{{ booking.user.name }}</td>
+                    <td>{{ booking.user.email }}</td>
+                    <td>{{ booking.trek.name }}</td>
+                    <td>{{ booking.trek.location }}</td>
+                    <td class="text-center">{{ booking.trek.difficulty }}</td>
+                    <td class="text-center">{{ booking.trek.duration }} days</td>
+                    <td class="text-center">{{ booking.booking_date.strftime('%d/%m/%Y') }}</td>
+                    <td class="text-center">{{ booking.status }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center">no bookings yet</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
 </body>
 </html>
