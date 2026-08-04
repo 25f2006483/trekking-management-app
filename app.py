@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, session, flash
-from database import db, Admin, Staff, User
+from database import db, Admin, Staff, User, Trek, Booking
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import RegisterForm, LoginForm
 
@@ -126,7 +126,15 @@ def logout():
 def admin_dashboard():
     if session.get('role') != 'admin':
         return redirect(url_for('login'))
-    return render_template('admin/dashboard.html')
+    total_treks = Trek.query.count()
+    total_users = User.query.count()
+    total_staff = Staff.query.count()
+    total_bookings = Booking.query.count()
+    return render_template('admin/dashboard.html',
+        total_treks=total_treks,
+        total_users=total_users,
+        total_staff=total_staff,
+        total_bookings=total_bookings)
 
 @app.route('/staff/dashboard')
 def staff_dashboard():
@@ -139,6 +147,136 @@ def user_dashboard():
     if session.get('role') != 'user':
         return redirect(url_for('login'))
     return render_template('user/dashboard.html')
+
+@app.route('/admin/treks')
+def admin_treks():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    treks = Trek.query.all()
+    return render_template('admin/treks.html', treks=treks)
+
+@app.route('/admin/treks/add', methods=['GET', 'POST'])
+def admin_add_trek():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    from forms import TrekForm
+    from datetime import datetime
+    form = TrekForm()
+    if form.validate_on_submit():
+        start = datetime.strptime(form.start_date.data, '%d/%m/%Y') if form.start_date.data else None
+        end = datetime.strptime(form.end_date.data, '%d/%m/%Y') if form.end_date.data else None
+        trek = Trek(
+            name=form.name.data,
+            location=form.location.data,
+            difficulty=form.difficulty.data,
+            duration=int(form.duration.data),
+            available_slots=int(form.available_slots.data),
+            start_date=start,
+            end_date=end,
+            status='open'
+        )
+        db.session.add(trek)
+        db.session.commit()
+        flash('trek added successfully.', 'success')
+        return redirect(url_for('admin_treks'))
+    return render_template('admin/add_trek.html', form=form)
+
+@app.route('/admin/treks/delete/<int:trek_id>')
+def admin_delete_trek(trek_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    trek = Trek.query.get_or_404(trek_id)
+    db.session.delete(trek)
+    db.session.commit()
+    flash('trek deleted.', 'success')
+    return redirect(url_for('admin_treks'))
+
+@app.route('/admin/treks/edit/<int:trek_id>', methods=['GET', 'POST'])
+def admin_edit_trek(trek_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    from forms import TrekForm
+    from datetime import datetime
+    trek = Trek.query.get_or_404(trek_id)
+    form = TrekForm()
+    if form.validate_on_submit():
+        trek.name = form.name.data
+        trek.location = form.location.data
+        trek.difficulty = form.difficulty.data
+        trek.duration = int(form.duration.data)
+        trek.available_slots = int(form.available_slots.data)
+        trek.start_date = datetime.strptime(form.start_date.data, '%d/%m/%Y') if form.start_date.data else None
+        trek.end_date = datetime.strptime(form.end_date.data, '%d/%m/%Y') if form.end_date.data else None
+        db.session.commit()
+        flash('trek updated successfully.', 'success')
+        return redirect(url_for('admin_treks'))
+    form.name.data = trek.name
+    form.location.data = trek.location
+    form.difficulty.data = trek.difficulty
+    form.duration.data = str(trek.duration)
+    form.available_slots.data = str(trek.available_slots)
+    return render_template('admin/add_trek.html', form=form)
+
+@app.route('/admin/staff')
+def admin_staff():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    staff_list = Staff.query.all()
+    return render_template('admin/staff.html', staff_list=staff_list)
+
+@app.route('/admin/staff/approve/<int:staff_id>')
+def approve_staff(staff_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    staff = Staff.query.get_or_404(staff_id)
+    staff.status = 'approved'
+    db.session.commit()
+    flash('staff approved.', 'success')
+    return redirect(url_for('admin_staff'))
+
+@app.route('/admin/staff/blacklist/<int:staff_id>')
+def blacklist_staff(staff_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    staff = Staff.query.get_or_404(staff_id)
+    staff.status = 'blacklisted'
+    db.session.commit()
+    flash('staff blacklisted.', 'danger')
+    return redirect(url_for('admin_staff'))
+
+@app.route('/admin/users')
+def admin_users():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    users = User.query.all()
+    return render_template('admin/users.html', users=users)
+
+@app.route('/admin/users/blacklist/<int:user_id>')
+def blacklist_user(user_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    user = User.query.get_or_404(user_id)
+    user.status = 'blacklisted'
+    db.session.commit()
+    flash('user blacklisted.', 'danger')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/activate/<int:user_id>')
+def activate_user(user_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    user = User.query.get_or_404(user_id)
+    user.status = 'active'
+    db.session.commit()
+    flash('user activated.', 'success')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/bookings')
+def admin_bookings():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    bookings = Booking.query.all()
+    return render_template('admin/bookings.html', bookings=bookings)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -15,3 +15,18 @@ class LoginForm(FlaskForm):
     password = PasswordField('password', validators=[DataRequired()])
     role = SelectField('login as', choices=[('user', 'user (trekker)'), ('staff', 'trek staff'), ('admin', 'admin')])
     submit = SubmitField('login')
+
+from wtforms import TextAreaField
+from wtforms.validators import Optional
+from flask_wtf import FlaskForm
+
+class TrekForm(FlaskForm):
+    name = StringField('trek name', validators=[DataRequired(), Length(min=2, max=120)])
+    location = StringField('location', validators=[DataRequired()])
+    difficulty = SelectField('difficulty', choices=[('easy', 'easy'), ('moderate', 'moderate'), ('hard', 'hard')])
+    duration = StringField('duration (in days)', validators=[DataRequired()])
+    available_slots = StringField('available slots', validators=[DataRequired()])
+    start_date = StringField('start date (dd/mm/yyyy)', validators=[Optional()])
+    end_date = StringField('end date (dd/mm/yyyy)', validators=[Optional()])
+    description = TextAreaField('description', validators=[Optional()])
+    submit = SubmitField('save trek')
