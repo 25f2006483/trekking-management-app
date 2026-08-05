@@ -11,6 +11,7 @@
         <a class="navbar-brand">trekking management app</a>
         <div>
             <span class="text-white me-3">welcome, {{ session['name'] }}</span>
+            <a href="/user/profile" class="btn btn-outline-light btn-sm me-2">my profile</a>
             <a href="/user/bookings" class="btn btn-outline-light btn-sm me-2">my bookings</a>
             <a href="/user/history" class="btn btn-outline-light btn-sm me-2">history</a>
             <a href="/logout" class="btn btn-danger btn-sm">logout</a>
@@ -80,6 +81,39 @@
             {% endfor %}
         </tbody>
     </table>
-</div>
+
+        <h3 class="mt-5">my booked treks</h3>
+        <table class="table table-bordered table-striped mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>trek</th>
+                    <th>location</th>
+                    <th>difficulty</th>
+                    <th>booking date</th>
+                    <th>trek status</th>
+                    <th>booking status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in my_bookings %}
+                <tr>
+                    <td>{{ booking.trek.name }}</td>
+                    <td>{{ booking.trek.location }}</td>
+                    <td>{{ booking.trek.difficulty }}</td>
+                    <td>{{ booking.booking_date.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ booking.trek.status }}</td>
+                    <td>{{ booking.status }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">no bookings yet</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
 </body>
 </html>
+
+   

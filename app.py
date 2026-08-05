@@ -316,7 +316,8 @@ def user_dashboard():
     if difficulty:
         query = query.filter_by(difficulty=difficulty)
     treks = query.all()
-    return render_template('user/dashboard.html', treks=treks, search=search, difficulty=difficulty)
+    my_bookings = Booking.query.filter_by(user_id=session['user_id']).all()
+    return render_template('user/dashboard.html', treks=treks, search=search, difficulty=difficulty, my_bookings=my_bookings)
 
 @app.route('/user/trek/<int:trek_id>')
 def user_trek_detail(trek_id):
@@ -361,6 +362,49 @@ def user_history():
         return redirect(url_for('login'))
     bookings = Booking.query.filter_by(user_id=session['user_id']).all()
     return render_template('user/history.html', bookings=bookings)
+
+@app.route('/user/profile', methods=['GET', 'POST'])
+def user_profile():
+    if session.get('role') != 'user':
+        return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
+    if request.method == 'POST':
+        user.name = request.form.get('name')
+        user.contact = request.form.get('contact')
+        session['name'] = user.name
+        db.session.commit()
+        flash('profile updated successfully.', 'success')
+        return redirect(url_for('user_profile'))
+    return render_template('user/profile.html', user=user)
+
+@app.route('/admin/search')
+def admin_search():
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    query = request.args.get('query', '')
+    search_type = request.args.get('type', 'treks')
+    results_treks = []
+    results_users = []
+    results_staff = []
+    if query:
+        if search_type == 'treks':
+            results_treks = Trek.query.filter(
+                Trek.name.contains(query) | Trek.location.contains(query)
+            ).all()
+        elif search_type == 'users':
+            results_users = User.query.filter(
+                User.name.contains(query) | User.email.contains(query)
+            ).all()
+        elif search_type == 'staff':
+            results_staff = Staff.query.filter(
+                Staff.name.contains(query) | Staff.email.contains(query)
+            ).all()
+    return render_template('admin/search.html',
+        query=query,
+        search_type=search_type,
+        results_treks=results_treks,
+        results_users=results_users,
+        results_staff=results_staff)
 
 if __name__ == "__main__":
     app.run(debug=True)
