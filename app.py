@@ -53,20 +53,20 @@ def register():
 
         elif form.role.data == 'staff':
             existing = Staff.query.filter_by(email=form.email.data).first()
-            if existing:
-                flash('email already registered. please login.', 'danger')
-                return redirect(url_for('register'))
-            hashed = generate_password_hash(form.password.data)
-            new_staff = Staff(
-                name=form.name.data,
-                email=form.email.data,
-                contact=form.contact.data,
-                password_hash=hashed
-            )
-            db.session.add(new_staff)
-            db.session.commit()
-            flash('registration successful. wait for admin approval.', 'success')
-            return redirect(url_for('login'))
+        if existing:
+            flash('email already registered. please login.', 'danger')
+            return redirect(url_for('register'))
+        hashed = generate_password_hash(form.password.data)
+        new_staff = Staff(
+            name=form.name.data,
+            email=form.email.data,
+            contact=form.contact.data,
+            password_hash=hashed
+        )
+        db.session.add(new_staff)
+        db.session.commit()
+        flash('registration successful. wait for admin approval.', 'success')
+        return redirect(url_for('login'))
 
     return render_template('register.html', form=form)
 
@@ -88,7 +88,9 @@ def login():
                 flash('invalid admin credentials.', 'danger')
 
         elif role == 'staff':
-            staff = Staff.query.filter_by(email=form.username.data).first()
+            staff = Staff.query.filter(
+                (Staff.email == form.username.data) | (Staff.name == form.username.data)
+            ).first()
             if staff and check_password_hash(staff.password_hash, password):
                 if staff.status == 'pending':
                     flash('your account is pending admin approval.', 'warning')
@@ -103,7 +105,9 @@ def login():
                 flash('invalid staff credentials.', 'danger')
 
         elif role == 'user':
-            user = User.query.filter_by(email=form.username.data).first()
+            user = User.query.filter(
+                (User.email == form.username.data) | (User.name == form.username.data)
+            ).first()
             if user and check_password_hash(user.password_hash, password):
                 if user.status == 'blacklisted':
                     flash('your account has been blacklisted.', 'danger')
@@ -155,11 +159,11 @@ def admin_add_trek():
     if session.get('role') != 'admin':
         return redirect(url_for('login'))
     from forms import TrekForm
-    from datetime import datetime
+    from datetime import datetime, date
     form = TrekForm()
     if form.validate_on_submit():
-        start = datetime.strptime(form.start_date.data, '%d/%m/%Y') if form.start_date.data else None
-        end = datetime.strptime(form.end_date.data, '%d/%m/%Y') if form.end_date.data else None
+        start = datetime.strptime(form.start_date.data, '%Y-%m-%d') if form.start_date.data else None
+        end = datetime.strptime(form.end_date.data, '%Y-%m-%d') if form.end_date.data else None
         trek = Trek(
             name=form.name.data,
             location=form.location.data,
@@ -174,7 +178,8 @@ def admin_add_trek():
         db.session.commit()
         flash('trek added successfully.', 'success')
         return redirect(url_for('admin_treks'))
-    return render_template('admin/add_trek.html', form=form)
+    today = date.today().strftime('%Y-%m-%d')
+    return render_template('admin/add_trek.html', form=form, today = today)
 
 @app.route('/admin/treks/delete/<int:trek_id>')
 def admin_delete_trek(trek_id):
@@ -191,26 +196,29 @@ def admin_edit_trek(trek_id):
     if session.get('role') != 'admin':
         return redirect(url_for('login'))
     from forms import TrekForm
-    from datetime import datetime
+    from datetime import datetime, date
     trek = Trek.query.get_or_404(trek_id)
     form = TrekForm()
     if form.validate_on_submit():
+        start = datetime.strptime(form.start_date.data, '%Y-%m-%d') if form.start_date.data else None
+        end = datetime.strptime(form.end_date.data, '%Y-%m-%d') if form.end_date.data else None
         trek.name = form.name.data
         trek.location = form.location.data
         trek.difficulty = form.difficulty.data
         trek.duration = int(form.duration.data)
         trek.available_slots = int(form.available_slots.data)
-        trek.start_date = datetime.strptime(form.start_date.data, '%d/%m/%Y') if form.start_date.data else None
-        trek.end_date = datetime.strptime(form.end_date.data, '%d/%m/%Y') if form.end_date.data else None
+        trek.start_date = start
+        trek.end_date = end
         db.session.commit()
         flash('trek updated successfully.', 'success')
         return redirect(url_for('admin_treks'))
     form.name.data = trek.name
     form.location.data = trek.location
     form.difficulty.data = trek.difficulty
-    form.duration.data = str(trek.duration)
     form.available_slots.data = str(trek.available_slots)
-    return render_template('admin/add_trek.html', form=form)
+    form.duration.data = str(trek.duration)
+    today = date.today().strftime('%Y-%m-%d')
+    return render_template('admin/add_trek.html', form=form, today=today)
 
 @app.route('/admin/staff')
 def admin_staff():

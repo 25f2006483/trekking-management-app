@@ -54,6 +54,7 @@
                 <th>id</th>
                 <th>name</th>
                 <th>email</th>
+                <th>contact</th>
                 <th>booking date</th>
                 <th>status</th>
             </tr>
@@ -64,12 +65,13 @@
                 <td>{{ booking.user.id }}</td>
                 <td>{{ booking.user.name }}</td>
                 <td>{{ booking.user.email }}</td>
+                <td>{{ booking.user.contact }}</td>
                 <td>{{ booking.booking_date.strftime('%d/%m/%Y') }}</td>
                 <td>{{ booking.status }}</td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" class="text-center">no participants yet</td>
+                <td colspan="6" class="text-center">no participants yet</td>
             </tr>
             {% endfor %}
         </tbody>

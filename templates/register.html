@@ -24,7 +24,7 @@
                     </div>
                     <div class="mb-3">
                         {{ form.contact.label }}
-                        {{ form.contact(class="form-control") }}
+                        {{ form.contact(class="form-control",  pattern="[0-9]{10}", maxlength="10") }}
                     </div>
                     <div class="mb-3">
                         {{ form.password.label }}
